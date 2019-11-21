@@ -1,7 +1,6 @@
 import { View, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import PropTypes from 'prop-types'
-//import classNames from 'classnames'
 
 import './index.scss'
 
@@ -9,15 +8,7 @@ export default class Drag extends Taro.Component {
   constructor(props) {
     super(props)
 
-    this.myItemDom = {
-      // 每一项 item 的 dom 信息, 由于大小一样所以只存储一个
-      width: 0,
-      height: 0,
-      left: 0,
-      top: 0
-    }
-
-    this.state = {
+    this.data = {
       /* 渲染数据 */
       windowHeight: 0, // 视窗高度
       platform: '', // 平台信息
@@ -30,6 +21,9 @@ export default class Drag extends Taro.Component {
         left: 0,
         top: 0
       },
+    }
+
+    this.state = {
       itemWrapDom: {
         // 整个拖拽区域的 dom 信息
         width: 0,
@@ -68,11 +62,6 @@ export default class Drag extends Taro.Component {
     let { index } = e.currentTarget.dataset
     let item = this.state.list[index]
     this.props.onItemClick(index, item.key, item.data)
-    //this.triggerEvent('click', {
-      //oldKey: index,
-      //newKey: item.key,
-      //data: item.data
-    //})
   }
   /**
    * 长按触发移动排序
@@ -93,9 +82,11 @@ export default class Drag extends Taro.Component {
     this.setState({ dragging: true })
 
     let { pageX: startPageX, pageY: startPageY } = startTouch,
-      { itemDom, itemWrapDom } = this.state,
+      { itemWrapDom } = this.state,
       startTranX = 0,
       startTranY = 0
+
+    let { itemDom } = this.data
 
     if (this.props.columns > 1) {
       // 多列的时候计算X轴初始位移, 使 item 水平中心移动到点击处
@@ -129,7 +120,9 @@ export default class Drag extends Taro.Component {
         windowHeight,
         realTopSize,
         realBottomSize,
-        itemDom,
+    } = this.data
+
+    let {
         startTouch,
         startTranX,
         startTranY,
@@ -146,6 +139,8 @@ export default class Drag extends Taro.Component {
         identifier: currentId,
         clientY: currentClientY
       } = currentTouch
+
+      let itemDom = this.data.itemDom
 
     // 如果不是同一个触发点则返回
     if (startId !== currentId) return
@@ -209,7 +204,7 @@ export default class Drag extends Taro.Component {
    */
   calculateMoving(tranX, tranY) {
     console.log('calculateMoving')
-    let { itemDom } = this.state
+    let itemDom = this.data.itemDom
 
     let rows = Math.ceil(this.state.list.length / this.props.columns) - 1,
       i = Math.round(tranX / itemDom.width),
@@ -290,12 +285,12 @@ export default class Drag extends Taro.Component {
    * 根据排序后 list 数据进行位移计算
    */
   getPosition(data, vibrate = true) {
-    let { platform, itemDom } = this.state
-    console.log('getPosition', 'itemDom.height', itemDom.height, 'myItemDom.height', this.myItemDom.height)
+    let { platform, itemDom  } = this.data
+    console.log('getPosition', 'itemDom.height', itemDom.height, 'data.itemDom.height', this.data.itemDom.height)
 
     let list = data.map((item, index) => {
       item.tranX = itemDom.width * (item.key % this.props.columns)
-      item.tranY = Math.floor(item.key / this.props.columns) * this.myItemDom.height
+      item.tranY = Math.floor(item.key / this.props.columns) * this.data.itemDom.height
       console.log('item.key:', item.key, 'colums:', this.props.columns)
       return item
     })
@@ -359,12 +354,10 @@ export default class Drag extends Taro.Component {
 
     console.log('initDom', 'windowWidth', windowWidth, 'remScale', remScale, 'bottomSize', bottomSize)
 
-    this.setState({
-      windowHeight: windowHeight,
-      platform: platform,
-      realTopSize: realTopSize,
-      realBottomSize: realBottomSize
-    })
+    this.data.windowHeight=windowHeight
+    this.data.platform=platform
+    this.data.realTopSize=realTopSize
+    this.data.realBottomSize=realBottomSize
 
     Taro.createSelectorQuery().in(this.$scope)
       .select('.item')
@@ -373,9 +366,8 @@ export default class Drag extends Taro.Component {
         if (res) {
           let rows = Math.ceil(this.state.list.length / this.props.columns)
           console.log('initDom rows:',  rows, 'res.height', res.height, 'itemWrapHeight:', rows * res.height)
-          this.myItemDom=res
+          this.data.itemDom=res
           this.setState({
-            itemDom: res,
             itemWrapHeight: rows * res.height
           })
 
