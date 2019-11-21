@@ -1,0 +1,93 @@
+page {
+  padding-top: 110px;
+}
+
+.empty-bottom {
+  padding-bottom: 300px;
+}
+.empty-bottom.isX {
+  padding-bottom: 380px;
+}
+
+.tip {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  padding: 20px;
+  font-size: 24px;
+  color: #999999;
+  z-index: 999;
+  background: #FFFFFF;
+  box-sizing: border-box;
+  border-bottom: 1px solid #ebedf0;
+}
+
+.control-panel {
+  border-top: 1px solid #ebedf0;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 111;
+  background: #ffffff;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.control-panel.isX {
+  padding-bottom: 80px;
+}
+
+.panel-item {
+  display: flex;
+  align-items: center;
+}
+.panel-item__bd {
+  flex: 1;
+}
+
+.circle-wrap {
+  display: inline-block;
+  text-align: center;
+  padding: 20px 8px;
+}
+.circle-wrap .circle {
+  width: 50px;
+  height: 50px;
+  border: 2px solid #ebedf0;
+  border-radius: 50%;
+}
+.circle-wrap .cur {
+  color: #fff;
+  line-height: 50px;
+  background: #3F82FD;
+  border: 2px solid #3F82FD;
+}
+
+.plus {
+  width: 100%;
+  height: 100%;
+  background: #efefef;
+}
+.plus:before {
+  position: absolute;
+  content: "";
+  width: 50%;
+  height: 4px;
+  top: 50%;
+  left: 50%;
+  margin-top: -2px;
+  margin-left: -25%;
+  background: #cbcbcb;
+}
+.plus:after {
+  position: absolute;
+  content: "";
+  width: 4px;
+  height: 50%;
+  top: 50%;
+  left: 50%;
+  margin-top: -25%;
+  margin-left: -2px;
+  background: #cbcbcb;
+}
