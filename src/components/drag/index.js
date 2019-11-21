@@ -1,6 +1,7 @@
 import { View, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import PropTypes from 'prop-types'
+//import classNames from 'classnames'
 
 import './index.scss'
 
@@ -8,20 +9,15 @@ export default class Drag extends Taro.Component {
   constructor(props) {
     super(props)
 
-    this.state = {
-      /* 未渲染数据 */
-      list: [],
-      cur: -1, // 当前激活的元素
-      curZ: -1, // 当前激活的元素, 用于控制激活元素z轴显示
-      tranX: 0, // 当前激活元素的 X轴 偏移量
-      tranY: 0, // 当前激活元素的 Y轴 偏移量
-      itemWrapHeight: 0, // 动态计算父级元素高度
-      dragging: false, // 是否在拖拽中
-      overOnePage: false, // 整个区域是否超过一个屏幕
-      itemTransition: false, // item 变换是否需要过渡动画, 首次渲染不需要
+    this.myItemDom = {
+      // 每一项 item 的 dom 信息, 由于大小一样所以只存储一个
+      width: 0,
+      height: 0,
+      left: 0,
+      top: 0
     }
 
-    this.data = {
+    this.state = {
       /* 渲染数据 */
       windowHeight: 0, // 视窗高度
       platform: '', // 平台信息
@@ -51,6 +47,16 @@ export default class Drag extends Taro.Component {
       startTranY: 0, // 当前激活元素的初始 Y轴 偏移量
       preOriginKey: -1, // 前一次排序时候的起始 key 值
 
+      /* 未渲染数据 */
+      list: [],
+      cur: -1, // 当前激活的元素
+      curZ: -1, // 当前激活的元素, 用于控制激活元素z轴显示
+      tranX: 0, // 当前激活元素的 X轴 偏移量
+      tranY: 0, // 当前激活元素的 Y轴 偏移量
+      itemWrapHeight: 0, // 动态计算父级元素高度
+      dragging: false, // 是否在拖拽中
+      overOnePage: false, // 整个区域是否超过一个屏幕
+      itemTransition: false, // item 变换是否需要过渡动画, 首次渲染不需要
       listDataChanged: true, // 第一次渲染需调用init()一次, 以便计算item显示位置
     }
   }
@@ -62,6 +68,11 @@ export default class Drag extends Taro.Component {
     let { index } = e.currentTarget.dataset
     let item = this.state.list[index]
     this.props.onItemClick(index, item.key, item.data)
+    //this.triggerEvent('click', {
+      //oldKey: index,
+      //newKey: item.key,
+      //data: item.data
+    //})
   }
   /**
    * 长按触发移动排序
@@ -82,7 +93,7 @@ export default class Drag extends Taro.Component {
     this.setState({ dragging: true })
 
     let { pageX: startPageX, pageY: startPageY } = startTouch,
-      { itemDom, itemWrapDom } = this.data,
+      { itemDom, itemWrapDom } = this.state,
       startTranX = 0,
       startTranY = 0
 
@@ -93,15 +104,17 @@ export default class Drag extends Taro.Component {
     // 计算Y轴初始位移, 使 item 垂直中心移动到点击处
     startTranY = startPageY - itemDom.height / 2 - itemWrapDom.top
 
-    this.data.startTouch= startTouch
-    this.data.startTranX= startTranX
-    this.data.startTranY= startTranY
-    this.data.cur= index
-    this.data.curZ= index
-    this.data.tranX= startTranX
-    this.data.tranY= startTranY
-
+    this.setState({
+      startTouch: startTouch,
+      startTranX: startTranX,
+      startTranY: startTranY,
+      cur: index,
+      curZ: index,
+      tranX: startTranX,
+      tranY: startTranY
+    })
     Taro.vibrateShort()
+    console.log('longPress end')
   }
 
   touchMove(e) {
@@ -121,7 +134,7 @@ export default class Drag extends Taro.Component {
         startTranX,
         startTranY,
         preOriginKey
-      } = this.data,
+      } = this.state,
       {
         pageX: startPageX,
         pageY: startPageY,
@@ -177,13 +190,15 @@ export default class Drag extends Taro.Component {
 
     // 防止拖拽过程中发生乱序问题
     if (originKey === endKey || preOriginKey === originKey) return
-    this.data.preOriginKey=originKey
+    this.setState({ preOriginKey: originKey })
 
+    console.log('touchMove end')
     // 触发排序
     this.insert(originKey, endKey)
   }
 
   touchEnd() {
+    console.log('touchEnd dragging:', this.state.dragging)
     if (!this.state.dragging) return
     this.clearData()
     console.log('touchEnd')
@@ -194,7 +209,7 @@ export default class Drag extends Taro.Component {
    */
   calculateMoving(tranX, tranY) {
     console.log('calculateMoving')
-    let { itemDom } = this.data
+    let { itemDom } = this.state
 
     let rows = Math.ceil(this.state.list.length / this.props.columns) - 1,
       i = Math.round(tranX / itemDom.width),
@@ -209,6 +224,7 @@ export default class Drag extends Taro.Component {
     endKey =
       endKey >= this.state.list.length ? this.state.list.length - 1 : endKey
 
+    console.log('calculateMoving end')
     return endKey
   }
 
@@ -274,17 +290,19 @@ export default class Drag extends Taro.Component {
    * 根据排序后 list 数据进行位移计算
    */
   getPosition(data, vibrate = true) {
-    let { platform, itemDom } = this.data
-    console.log('getPosition', 'itemDom.height', itemDom.height)
+    let { platform, itemDom } = this.state
+    console.log('getPosition', 'itemDom.height', itemDom.height, 'myItemDom.height', this.myItemDom.height)
 
     let list = data.map((item, index) => {
       item.tranX = itemDom.width * (item.key % this.props.columns)
-      item.tranY = Math.floor(item.key / this.props.columns) * itemDom.height
+      item.tranY = Math.floor(item.key / this.props.columns) * this.myItemDom.height
+      console.log('item.key:', item.key, 'colums:', this.props.columns)
       return item
     })
     this.setState({ list: list })
 
     if (!vibrate) {
+      console.log('!vibrate')
       return
     }
     if (platform !== 'devtools') Taro.vibrateShort()
@@ -292,8 +310,12 @@ export default class Drag extends Taro.Component {
     list.forEach(item => {
       listData[item.key] = item.data
     })
+    console.log('this.props.onChange:', listData)
     this.props.onChange(listData)
-    this.data.listDataChanged=true
+    this.setState({
+      listDataChanged: true
+    })
+    //this.triggerEvent('change', { listData: listData })
   }
 
   /**
@@ -309,8 +331,8 @@ export default class Drag extends Taro.Component {
    * 清除参数
    */
   clearData() {
-    this.data.preOriginKey=-1
     this.setState({
+      preOriginKey: -1,
       dragging: false,
       cur: -1,
       tranX: 0,
@@ -337,12 +359,13 @@ export default class Drag extends Taro.Component {
 
     console.log('initDom', 'windowWidth', windowWidth, 'remScale', remScale, 'bottomSize', bottomSize)
 
-    this.data.windowHeight = windowHeight
-    this.data.platform = platform
-    this.data.realTopSize = realTopSize
-    this.data.realBottomSize = realBottomSize
+    this.setState({
+      windowHeight: windowHeight,
+      platform: platform,
+      realTopSize: realTopSize,
+      realBottomSize: realBottomSize
+    })
 
-    // 获取组件自己的控件信息需要加上.in(this.$scope)，否则获取会失败，res会为null
     Taro.createSelectorQuery().in(this.$scope)
       .select('.item')
       .boundingClientRect(res => {
@@ -350,8 +373,9 @@ export default class Drag extends Taro.Component {
         if (res) {
           let rows = Math.ceil(this.state.list.length / this.props.columns)
           console.log('initDom rows:',  rows, 'res.height', res.height, 'itemWrapHeight:', rows * res.height)
-          this.data.itemDom= res
+          this.myItemDom=res
           this.setState({
+            itemDom: res,
             itemWrapHeight: rows * res.height
           })
 
@@ -366,8 +390,8 @@ export default class Drag extends Taro.Component {
                 let overOnePage = wres.bottom > windowHeight - realBottomSize
 
                 console.log('overOnePage:', overOnePage, 'res.bottom', wres.bottom, 'windowHeight', windowHeight, 'realBottomSize', realBottomSize)
-                this.data.itemWrapDom= wres
                 this.setState({
+                  itemWrapDom: wres,
                   overOnePage: overOnePage
                 })
               }
@@ -384,7 +408,9 @@ export default class Drag extends Taro.Component {
   init() {
     console.log('init')
     const listData = this.props.listData
-    this.data.listDataChanged=false
+    this.setState({
+      listDataChanged: false,
+    })
     this.clearData()
     // 避免获取不到节点信息报错问题
     if (listData.length === 0) {
@@ -410,7 +436,7 @@ export default class Drag extends Taro.Component {
   }
 
   render() {
-    if (this.data.listDataChanged) {
+    if (this.state.listDataChanged) {
       this.init()
     }
 
