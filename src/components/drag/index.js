@@ -1,7 +1,7 @@
+// modify by tczengming@163.com
 import { View, Image } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import PropTypes from 'prop-types'
-//import classNames from 'classnames'
 
 import './index.scss'
 
@@ -11,15 +11,16 @@ export default class Drag extends Taro.Component {
 
     this.data = {
       itemDom: {
-        // 每一项 item 的 dom 信息, 由于大小一样所以只存储一个
+        // 每一项 item 的 dom 信息, 由于大小一样所以只存储一个, 不放在state中原因是会导致其他地方获取到的可能是0(state是异步的，未及时同步导致)
         width: 0,
         height: 0,
         left: 0,
         top: 0
       },
-      preOriginKey: -1, // 前一次排序时候的起始 key 值
+      preOriginKey: -1, // 前一次排序时候的起始 key 值 , 不放在state中原因是会导致无法连续拖动
     }
 
+    // 有些变量必须放在state中，否则可能无法出现拖动动画
     this.state = {
       /* 渲染数据 */
       windowHeight: 0, // 视窗高度
