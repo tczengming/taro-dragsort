@@ -52,7 +52,6 @@ export default class Drag extends Taro.Component {
       dragging: false, // 是否在拖拽中
       overOnePage: false, // 整个区域是否超过一个屏幕
       itemTransition: false, // item 变换是否需要过渡动画, 首次渲染不需要
-      listDataChanged: true, // 第一次渲染需调用init()一次, 以便计算item显示位置
     }
 
     this.init()
@@ -322,10 +321,7 @@ export default class Drag extends Taro.Component {
       listData[item.key] = item.data
     })
     console.log('this.props.onChange:', listData)
-    //this.props.onChange(listData) // TODO
-    this.setState({
-      listDataChanged: true
-    })
+    this.props.onChange(listData)
     //this.triggerEvent('change', { listData: listData })
   }
 
@@ -420,9 +416,6 @@ export default class Drag extends Taro.Component {
   init() {
     console.log('init')
     const listData = this.props.listData
-    this.setState({
-      listDataChanged: false,
-    })
     this.clearData()
     // 避免获取不到节点信息报错问题
     if (listData.length === 0) {
@@ -448,9 +441,6 @@ export default class Drag extends Taro.Component {
   }
 
   render() {
-    //if (this.state.listDataChanged) {
-      //this.init()
-    //}
 
     const columns = this.props.columns
 
